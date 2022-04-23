@@ -1,0 +1,15 @@
+emotifymusic:
+  codec: "mp3"
+  path: "emotifymusic"
+  start_idx: 1
+  end_idx: 400
+  genres:
+    - classical
+    - rock
+    - electronic
+    - pop
+  channel: 80
+  n_fft: 512
+  hop_length: 128
+  win_length: 512
+  fmax: 8000

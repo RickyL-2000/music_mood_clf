@@ -1,0 +1,79 @@
+version: "0_1"
+rank: 0
+using_gpu: true
+
+model:
+  mel_enc:
+    in_channels: 80
+    out_channels: 256
+    kernel_size: 5
+    resnet_n_layer: 2
+    bias: true
+
+  lstm:
+    input_size: 256
+    hidden_size: 128
+    num_layers: 2
+    bias: true
+    batch_first: true
+    bidirectional: true
+
+  linear:
+    in_features: 512
+    out_features: 9
+    bias: true
+
+dataset_name: "emotifymusic"
+dataset:
+  seed: 777
+  emotifymusic:
+    path: "emotifymusic"
+    start_idx: 1
+    end_idx: 400
+    genres:
+      - classical
+      - rock
+      - electronic
+      - pop
+
+    train_eval_split: 0.8
+    batch_size: 8
+    num_workers: 16       # 减少寻batch所需要的时间
+    allow_cache: true
+    pin_memory: true
+
+  # template
+  your_dataset_name:
+    your_params: 123456
+
+    train_eval_split: 0.8
+    batch_size: 8
+    num_workers: 16       # 减少寻batch所需要的时间
+    allow_cache: true
+    pin_memory: true
+
+trainer:
+  checkpoint_path: "checkpoints"
+  distributed: fasle
+
+  optimizer: "Adam"
+  optimizer_params:
+    Adam:
+      lr: 0.0001
+      eps: 1.0e-6
+      weight_decay: 0.0
+
+  scheduler: "StepLR"
+  scheduler_params:
+    StepLR:
+      step_size: 20000
+      gamma: 0.5
+
+  train_max_steps: 40000
+  save_interval_steps: 400
+  eval_interval_steps: 200
+  log_interval_steps: 50
+
+  loss_fn: "BCEWithLogits"
+  criterion: "MSE"
+
