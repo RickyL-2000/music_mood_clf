@@ -38,10 +38,10 @@ class Trainer(object):
         self.data_loader = data_loader
         self.sampler = sampler
         self.model = model
-        self.criterion = criterion
+        self.criterion = criterion[config['criterion']]
         self.loss_fn = criterion[config['loss_fn']]
-        self.optimizer = optimizer
-        self.scheduler = scheduler
+        self.optimizer = optimizer[config['optimizer']]
+        self.scheduler = scheduler[config['scheduler']]
         self.config = config
         self.device = device
         self.version = version
@@ -303,7 +303,8 @@ def main():
     # --------------------------------------- criterion ---------------------------------------- #
     criterion = {
         'MSE': torch.nn.MSELoss(),
-        'BCE': torch.nn.BCELoss()
+        'BCE': torch.nn.BCELoss(),
+        'BCEWithLogits': torch.nn.BCEWithLogitsLoss()
     }
 
     # --------------------------------------- define models ---------------------------------------- #
@@ -318,7 +319,7 @@ def main():
     # --------------------------------------- scheduler ---------------------------------------- #
     scheduler = {
         'StepLR': torch.optim.lr_scheduler.StepLR(optimizer=optimizer[config['trainer']['optimizer']],
-                                                  **config['trainer']['scheduler_params'])
+                                                  **config['trainer']['scheduler_params'][config['trainer']['scheduler']])
     }
 
     # --------------------------------------- distributed ---------------------------------------- #

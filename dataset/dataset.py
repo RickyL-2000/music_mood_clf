@@ -79,9 +79,11 @@ class EmotifyCollator(object):
             mel = dic['mel']
             # zero-padding: https://blog.csdn.net/sinat_36618660/article/details/100122745
             mel_batch.append(F.pad(mel, pad=(0, mel_max_length-mel.shape[1], 0, 0), mode='constant', value=0.0).numpy())
-            label_batch.append(dic['label'])
+            label_batch.append(dic['label'].numpy())
+        # UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting
+        # the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
         ret = {
-            'mel': torch.tensor(mel_batch),
-            'label': torch.tensor(label_batch)
+            'mel': torch.tensor(np.array(mel_batch)),
+            'label': torch.tensor(np.array(label_batch))
         }
         return ret
