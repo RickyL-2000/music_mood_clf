@@ -19,16 +19,18 @@ class MoodRecog(torch.nn.Module):
             out_channels=self.config['mel_enc']['out_channels'],
             bias=self.config['mel_enc']['bias']
         )
-        self.resnet = torch.nn.ModuleList()
+        self.second_net = torch.nn.ModuleList()
         for i in range(self.config['mel_enc']['resnet_n_layer']):
-            self.resnet.append(torch.nn.ReLU(inplace=True))
-            self.resnet.append(Conv1d(
+            # self.resnet.append(torch.nn.ReLU(inplace=True))
+            self.second_net.append(torch.nn.MaxPool1d(self.config['mel_enc']['maxpool_size']))
+            self.second_net.append(Conv1d(
                 in_channels=self.config['mel_enc']['out_channels'],
                 out_channels=self.config['mel_enc']['out_channels'],
                 kernel_size=self.config['mel_enc']['kernel_size'],
                 padding=(self.config['mel_enc']['kernel_size'] - 1) // 2,
                 bias=self.config['mel_enc']['bias']
             ))
+        self.second_net.append(torch.nn.ReLU(inplace=True))
 
         # --------------- lstm ---------------- #
         self.lstm = torch.nn.LSTM(
@@ -51,10 +53,10 @@ class MoodRecog(torch.nn.Module):
         # --------------- mel_enc ---------------- #
         # x: [B, C, L], batch, channels, length
         z = self.first_net(x)
-        res = z
-        for f in self.resnet:
+        # res = z
+        for f in self.second_net:
             z = f(z)
-        z = z + res
+        # z = z + res
 
         # --------------- lstm ---------------- #
         # z: [B, C, L]

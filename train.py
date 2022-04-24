@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 import torch.utils.data
 from tensorboardX import SummaryWriter
 
+from sklearn.metrics import r2_score
+
 import os
 import yaml
 import logging
@@ -157,7 +159,10 @@ class Trainer(object):
             y_ = torch.sigmoid(y_)  # nn.functional.sigmoid is deprecated. Use torch.sigmoid instead
 
         # compute score
-        self.total_eval_loss["eval/score"] += self.criterion(y, y_)
+        # MSE
+        self.total_eval_loss[f"eval/{self.config['criterion']}"] += self.criterion(y, y_)
+        # R2
+        self.total_eval_loss["eval/R2"] += r2_score(y.detach().cpu().numpy(), y_.detach().cpu().numpy())
 
     def _check_log_interval(self):
         if self.steps % self.config['log_interval_steps'] == 0:

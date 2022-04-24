@@ -1,4 +1,4 @@
-version: "0_1"
+version: "0_3"
 rank: 0
 using_gpu: true
 
@@ -9,6 +9,7 @@ model:
     kernel_size: 5
     resnet_n_layer: 2
     bias: true
+    maxpool_size: 3
 
   lstm:
     input_size: 256
@@ -37,8 +38,8 @@ dataset:
       - pop
 
     train_eval_split: 0.8
-    batch_size: 8
-    num_workers: 16       # accelerate finding batches
+    batch_size: 16
+    num_workers: 16       # 减少寻batch所需要的时间
     allow_cache: true
     pin_memory: true
 
@@ -48,7 +49,7 @@ dataset:
 
     train_eval_split: 0.8
     batch_size: 8
-    num_workers: 16
+    num_workers: 16       # 减少寻batch所需要的时间
     allow_cache: true
     pin_memory: true
 
@@ -59,7 +60,7 @@ trainer:
   optimizer: "Adam"
   optimizer_params:
     Adam:
-      lr: 0.0001
+      lr: 0.0005
       eps: 1.0e-6
       weight_decay: 0.0
 
