@@ -1,3 +1,5 @@
+import sys
+
 from torch.utils.data import Dataset
 import torch
 import torch.nn.functional as F
@@ -23,7 +25,7 @@ class EmotifyDataset(Dataset):
         if self.allow_cache:
             self.manager = Manager()
             self.caches = self.manager.list()
-            self.caches += [() for _ in range(len(self.files))]
+            self.caches += [() for _ in range(len(self.files)+1)]
 
         self.labels = self.get_soft_labels()
 
@@ -48,10 +50,18 @@ class EmotifyDataset(Dataset):
         return soft_labels
 
     def __getitem__(self, song_idx):
+        # NOTE: while debugging, need to change "num_workers" to 0!
+        song_idx = song_idx + 1     # the index begins from 1
+        # try:
         item = {
             'mel': torch.tensor(self.mel_load_fn(self.files[song_idx])),
             'label': torch.tensor(self.labels[song_idx])
         }
+        # except KeyError as err:
+        #     print("song_idx =", song_idx)
+        #     print("Error:")
+        #     print(err)
+        #     sys.exit()
 
         if self.allow_cache:
             self.caches[song_idx] = item

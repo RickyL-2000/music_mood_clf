@@ -57,6 +57,7 @@ class Trainer(object):
         self.finish_train = False
 
     def run(self):
+        self.logger.debug(f"distributed: {self.config['distributed']}")
         self.tqdm = tqdm(initial=self.steps,
                          total=self.config["train_max_steps"],
                          desc="[train]")
@@ -84,8 +85,13 @@ class Trainer(object):
         self.epochs += 1
         self.logger.info(f"Epochs: {self.epochs} | Steps: {self.steps}")
 
+        # try:
         if self.config["distributed"]:
             self.sampler["train"].set_epoch(self.epochs)
+        # except AttributeError as err:
+        #     self.logger.debug(f"distributed: {self.config['distributed']}")
+        #     self.logger.debug(err)
+        #     sys.exit()
 
     def _train_step(self, batch):
         self.optimizer.zero_grad()
@@ -99,7 +105,7 @@ class Trainer(object):
         loss.backward()
         self.optimizer.step()
 
-        self.total_train_loss["train/onset_loss"] += loss.item()
+        self.total_train_loss["train/loss"] += loss.item()
 
         self.steps += 1
         self.tqdm.update(1)
@@ -144,11 +150,11 @@ class Trainer(object):
 
         loss = self.loss_fn(y_, y)
 
-        self.total_eval_loss["eval/onset_loss"] += loss.item()
+        self.total_eval_loss["eval/loss"] += loss.item()
 
         # NOTE: map y_ to [0, 1]
         if self.config["loss_fn"] == "BCEWithLogits":
-            y_ = F.sigmoid(y_)
+            y_ = torch.sigmoid(y_)  # nn.functional.sigmoid is deprecated. Use torch.sigmoid instead
 
         # compute score
         self.total_eval_loss["eval/score"] += self.criterion(y, y_)

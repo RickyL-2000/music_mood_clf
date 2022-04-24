@@ -38,7 +38,7 @@ dataset:
 
     train_eval_split: 0.8
     batch_size: 8
-    num_workers: 16       # 减少寻batch所需要的时间
+    num_workers: 16       # accelerate finding batches
     allow_cache: true
     pin_memory: true
 
@@ -48,13 +48,13 @@ dataset:
 
     train_eval_split: 0.8
     batch_size: 8
-    num_workers: 16       # 减少寻batch所需要的时间
+    num_workers: 16
     allow_cache: true
     pin_memory: true
 
 trainer:
   checkpoint_path: "checkpoints"
-  distributed: fasle
+  distributed: false
 
   optimizer: "Adam"
   optimizer_params:
@@ -72,7 +72,7 @@ trainer:
   train_max_steps: 40000
   save_interval_steps: 400
   eval_interval_steps: 200
-  log_interval_steps: 50
+  log_interval_steps: 40
 
   loss_fn: "BCEWithLogits"
   criterion: "MSE"
