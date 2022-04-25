@@ -28,7 +28,8 @@ class MoodRecog(torch.nn.Module):
                 out_channels=self.config['mel_enc']['out_channels'],
                 kernel_size=self.config['mel_enc']['kernel_size'],
                 padding=(self.config['mel_enc']['kernel_size'] - 1) // 2,
-                bias=self.config['mel_enc']['bias']
+                bias=self.config['mel_enc']['bias'],
+                reset=self.config['mel_enc']['reset']
             ))
         self.second_net.append(torch.nn.ReLU(inplace=True))
 
@@ -43,11 +44,25 @@ class MoodRecog(torch.nn.Module):
         )
 
         # --------------- linear ---------------- #
-        self.linear = torch.nn.Linear(
-            in_features=self.config['linear']['in_features'],
-            out_features=self.config['linear']['out_features'],
-            bias=self.config['linear']['bias']
-        )
+        self.linear = torch.nn.ModuleList([
+            torch.nn.Linear(
+                in_features=self.config['linear']['in_features'],
+                out_features=self.config['linear']['hidden_features'],
+                bias=self.config['linear']['bias']
+            ),
+            torch.nn.ReLU(inplace=True),
+            torch.nn.Linear(
+                in_features=self.config['linear']['hidden_features'],
+                out_features=self.config['linear']['out_features'],
+                bias=self.config['linear']['bias']
+            ),
+            torch.nn.Softmax(dim=1)
+        ])
+        # self.linear = torch.nn.Linear(
+        #     in_features=self.config['linear']['in_features'],
+        #     out_features=self.config['linear']['out_features'],
+        #     bias=self.config['linear']['bias']
+        # )
 
     def forward(self, x):
         # --------------- mel_enc ---------------- #
@@ -67,9 +82,10 @@ class MoodRecog(torch.nn.Module):
         # --------------- linear ---------------- #
         hn = hn.permute(1, 0, 2)    # [D * num_layers, B, C] -> [B, D * num_layers, C]
         out = torch.flatten(hn, start_dim=1)     # [B, D * num_layers, C] -> [B, D * num_layers * C]
-        out = self.linear(out)
+        # out = self.linear(out)
+        for f in self.linear:
+            out = f(out)
         # out = F.sigmoid(out)
         # NOTE: the sigmoid is integrated into the BCEWithLogits() of torch
-        # FIXME: do we need to add the sigmoid when inferring?
 
         return out

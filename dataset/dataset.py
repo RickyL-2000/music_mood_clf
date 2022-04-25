@@ -97,3 +97,66 @@ class EmotifyCollator(object):
             'label': torch.tensor(np.array(label_batch))
         }
         return ret
+
+class FourQDataset(Dataset):
+    def __init__(self, config):
+        self.config = config
+        self.data_path = f"{base_dir}/{self.config['path']}"
+        self.files, self.labels = self.get_data()
+
+        self.allow_cache = self.config["allow_cache"]
+        if self.allow_cache:
+            self.manager = Manager()
+            self.caches = self.manager.list()
+            self.caches += [() for _ in range(len(self.files))]
+
+    def get_data(self):
+        files = []
+        labels = []
+        for label in self.config["category"]:
+            for f_name in os.listdir(f"{self.data_path}/{label}_mel"):
+                files.append(f"{self.data_path}/{label}_mel/{f_name}")
+                labels.append(int(label[1])-1)  # Q1 -> class0
+        return files, labels
+
+    def __getitem__(self, song_idx):
+        item = {
+            'mel': torch.tensor(self.mel_load_fn(self.files[song_idx])),
+            'label': torch.tensor(self.labels[song_idx])
+        }
+
+        if self.allow_cache:
+            self.caches[song_idx] = item
+
+        return item
+
+    def __len__(self):
+        return len(self.files)
+
+    @staticmethod
+    def mel_load_fn(path):
+        with open(path, 'rb') as f:
+            mel = np.load(f, allow_pickle=True)
+        return mel
+
+class FourQCollator(object):
+    def __init__(self):
+        pass
+
+    def __call__(self, batch_dic):
+        mel_max_length = np.max([batch_dic[i]['mel'].shape[1] for i in range(len(batch_dic))])
+        mel_batch = []
+        label_batch = []
+        for dic in batch_dic:
+            mel = dic['mel']
+            # zero-padding: https://blog.csdn.net/sinat_36618660/article/details/100122745
+            mel_batch.append(
+                F.pad(mel, pad=(0, mel_max_length - mel.shape[1], 0, 0), mode='constant', value=0.0).numpy())
+            label_batch.append(dic['label'].numpy())
+        # UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting
+        # the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
+        ret = {
+            'mel': torch.tensor(np.array(mel_batch)),
+            'label': torch.tensor(np.array(label_batch))
+        }
+        return ret

@@ -1,4 +1,4 @@
-version: "0_3"
+version: "1_4"
 rank: 0
 using_gpu: true
 
@@ -7,26 +7,28 @@ model:
     in_channels: 80
     out_channels: 256
     kernel_size: 5
-    resnet_n_layer: 2
+    resnet_n_layer: 3
     bias: true
-    maxpool_size: 3
+    maxpool_size: 2
+    reset: true
 
   lstm:
     input_size: 256
-    hidden_size: 128
-    num_layers: 2
+    hidden_size: 256
+    num_layers: 1
     bias: true
     batch_first: true
     bidirectional: true
 
   linear:
     in_features: 512
-    out_features: 9
+    hidden_features: 256
+    out_features: 4
     bias: true
 
-dataset_name: "emotifymusic"
+dataset_name: "4Q"
 dataset:
-  seed: 777
+  seed: 77
   emotifymusic:
     path: "emotifymusic"
     start_idx: 1
@@ -41,6 +43,20 @@ dataset:
     batch_size: 16
     num_workers: 16       # 减少寻batch所需要的时间
     allow_cache: true
+    pin_memory: true
+
+  4Q:
+    path: "4Q/MER_audio_taffc_dataset"
+    category:
+      - Q1
+      - Q2
+      - Q3
+      - Q4
+
+    train_eval_split: 0.8
+    batch_size: 16
+    num_workers: 8       # 减少寻batch所需要的时间
+    allow_cache: false
     pin_memory: true
 
   # template
@@ -60,21 +76,21 @@ trainer:
   optimizer: "Adam"
   optimizer_params:
     Adam:
-      lr: 0.0005
+      lr: 0.0001
       eps: 1.0e-6
       weight_decay: 0.0
 
   scheduler: "StepLR"
   scheduler_params:
     StepLR:
-      step_size: 20000
+      step_size: 10000
       gamma: 0.5
 
   train_max_steps: 40000
   save_interval_steps: 400
   eval_interval_steps: 200
-  log_interval_steps: 40
+  log_interval_steps: 10
 
-  loss_fn: "BCEWithLogits"
-  criterion: "MSE"
+  loss_fn: "CE"
+#  criterion: "MSE"
 

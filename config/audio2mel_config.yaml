@@ -13,3 +13,18 @@ emotifymusic:
   hop_length: 128
   win_length: 512
   fmax: 8000
+
+4Q:
+  codec: "mp3"
+  path: "4Q/MER_audio_taffc_dataset"
+  class:
+    - Q1
+    - Q2
+    - Q3
+    - Q4
+  channel: 80
+  n_fft: 512
+  hop_length: 128
+  win_length: 512
+  fmax: 8000
+
