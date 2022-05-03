@@ -3,11 +3,11 @@ import torch
 class Conv1d(torch.nn.Conv1d):
     """Conv1d module with customized initialization."""
 
-    def __init__(self, reset=False, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Initialize Conv1d module."""
         super(Conv1d, self).__init__(*args, **kwargs)
-        if reset:
-            self.reset_parameters()
+        # if reset:
+        #     self.reset_parameters()
 
     def reset_parameters(self):
         """Reset parameters."""

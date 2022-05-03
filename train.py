@@ -54,6 +54,7 @@ class Trainer(object):
         self.total_train_loss = defaultdict(float)
         self.total_eval_loss = defaultdict(float)
         self.total_eval_score = defaultdict(float)
+        self.tensor_record = defaultdict(str)
 
         self.tqdm = None
         self.finish_train = False
@@ -63,12 +64,17 @@ class Trainer(object):
         self.tqdm = tqdm(initial=self.steps,
                          total=self.config["train_max_steps"],
                          desc="[train]")
+        # visualize model
+        fake_input = torch.randn(1, 80, 5000).to(self.device)
+        self.writer.add_graph(self.model, fake_input)
+
         while True:
             self._train_epoch()
 
             if self.finish_train:
                 break
         self.tqdm.close()
+        self.writer.close()
         self.logger.info("Finish training")
 
     def _train_epoch(self):
@@ -136,10 +142,14 @@ class Trainer(object):
         # record
         self._write_to_tensorboard(self.total_eval_loss)
         self._write_to_tensorboard(self.total_eval_score)
+        if self.epochs % 10 == 0:
+            self._write_to_tensorboard(self.tensor_record, dtype="text")
 
         # reset
         self.total_eval_loss = defaultdict(float)
         self.total_eval_score = defaultdict(float)
+        if self.epochs % 10 == 0:
+            self.tensor_record = defaultdict(str)
 
         # restore mode
         self.model.train()
@@ -160,19 +170,24 @@ class Trainer(object):
 
         # compute score
         # MSE
-        # self.total_eval_loss[f"eval/{self.config['criterion']}"] += self.criterion(y, y_)
+        # self.total_eval_score[f"eval/{self.config['criterion']}"] += self.criterion(y, y_)
         # R2
-        # self.total_eval_loss["eval/R2"] += r2_score(y.detach().cpu().numpy(), y_.detach().cpu().numpy())
+        # self.total_eval_score["eval/R2"] += r2_score(y.detach().cpu().numpy(), y_.detach().cpu().numpy())
+
+        # record some output
+        if self.epochs % 10 == 0:
+            self.tensor_record["record/y"] = str(y.detach().cpu().numpy())
+            self.tensor_record["record/y_hat"] = str(y_.detach().cpu().numpy())
 
         # make y_ into a 1-dim array
         y = y.detach().cpu().numpy()
         y_ = torch.argmax(y_, -1).detach().cpu().numpy()
         # precision, recall, f1
-        # self.total_eval_loss["eval/precision"] += precision_score(y, y_, average="micro")
-        # self.total_eval_loss["eval/recall"] += recall_score(y, y_, average="micro")
-        self.total_eval_loss["eval/f1"] += f1_score(y, y_, average="micro")
+        # self.total_eval_score["eval/precision"] += precision_score(y, y_, average="micro")
+        # self.total_eval_score["eval/recall"] += recall_score(y, y_, average="micro")
+        self.total_eval_score["eval/f1"] += f1_score(y, y_, average="micro")
         # auc
-        # self.total_eval_loss["eval/auc"] += roc_auc_score(y, y_, average="macro", multi_class='ovr')
+        # self.total_eval_score["eval/auc"] += roc_auc_score(y, y_, average="macro", multi_class='ovr')
 
     def _check_log_interval(self):
         if self.steps % self.config['log_interval_steps'] == 0:
@@ -197,9 +212,13 @@ class Trainer(object):
         if self.steps >= self.config['train_max_steps']:
             self.finish_train = True
 
-    def _write_to_tensorboard(self, item):
-        for key, value in item.items():
-            self.writer.add_scalar(key, value, self.steps)
+    def _write_to_tensorboard(self, item, dtype="scalar"):
+        if dtype == "scalar":
+            for key, value in item.items():
+                self.writer.add_scalar(key, value, self.steps)
+        elif dtype == "text":
+            for key, value in item.items():
+                self.writer.add_text(key, value, self.steps)
 
     def save_checkpoint(self, checkpoint_path, f_name):
         state_dict = {
@@ -246,7 +265,8 @@ def main():
         config = yaml.load(f, Loader=yaml.Loader)
     config.update(vars(args))
     # update checkpoint path
-    config['trainer']['checkpoint_path'] += f"/checkpoint_{config['version']}"
+    if config['trainer']['checkpoint_path'] == "checkpoints":
+        config['trainer']['checkpoint_path'] += f"/checkpoint_{config['version']}"
     mkdir(f"{config['trainer']['checkpoint_path']}")
     # save config
     with open(f"{config['trainer']['checkpoint_path']}/config.yaml", 'w') as f:
