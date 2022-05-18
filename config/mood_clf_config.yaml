@@ -1,4 +1,4 @@
-version: "1_15"
+version: "1_23"
 rank: 0
 using_gpu: true
 
@@ -6,8 +6,8 @@ model:
   mel_enc:
     in_channels: 80
     out_channels: 256
-    kernel_size: 3
-    resnet_n_layer: 4
+    kernel_size: 5
+    resnet_n_layer: 3
     bias: true
     maxpool_size: 3
     reset: true
@@ -78,7 +78,7 @@ trainer:
   optimizer: "Adam"
   optimizer_params:
     Adam:
-      lr: 0.0001
+      lr: 0.00001
       eps: 1.0e-6
       weight_decay: 0.0
 
@@ -88,9 +88,9 @@ trainer:
       step_size: 10000
       gamma: 0.5
 
-  train_max_steps: 40000
-  save_interval_steps: 400
-  eval_interval_steps: 200
+  train_max_steps: 20000
+  save_interval_steps: 300
+  eval_interval_steps: 100
   log_interval_steps: 10
 
   loss_fn: "CE"

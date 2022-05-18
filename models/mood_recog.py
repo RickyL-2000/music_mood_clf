@@ -26,7 +26,7 @@ class MoodRecog(torch.nn.Module):
             if self.config['mel_enc']['batchnorm']:
                 self.second_net.append(torch.nn.BatchNorm1d(num_features=self.config['mel_enc']['out_channels']))
             self.second_net.append(torch.nn.MaxPool1d(self.config['mel_enc']['maxpool_size']))
-            self.resnet.append(torch.nn.ReLU(inplace=True))
+            self.second_net.append(torch.nn.ReLU(inplace=True))
             conv_ = Conv1d(
                 in_channels=self.config['mel_enc']['out_channels'],
                 out_channels=self.config['mel_enc']['out_channels'],
