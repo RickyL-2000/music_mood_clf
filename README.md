@@ -6,4 +6,4 @@ Used in UIUC 2022 Senior Design project: [Mimicry Stage Lighting System](https:/
 
 ## Usage
 
-Download dataset: [4Q emotion](http://mir.dei.uc.pt/downloads.html), save it under the project directory, and run ```train.py```
+Download dataset: [4Q emotion](http://mir.dei.uc.pt/downloads.html), save it under the project directory, run ```feature_extraction.py``` and ```train.py```.
